@@ -9,13 +9,13 @@ namespace RapidGUI
     {
         static readonly string[] ListPopupButtonNames = new[] { "Add Element", "Delete Element" };
 
-        public static T ListField<T>(T list, Func<T, int, string, object> customElementGUI = null, Func<T, object> customLabelRightFunc = null)
+        public static T ListField<T>(T list, Func<T, int, string, object> customElementGUI = null, Func<T, object> customLabelRightFunc = null, bool isReadOnly = false)
             where T: IList
         {
             return ListField(list, null, customElementGUI, customLabelRightFunc);
         }
 
-        public static T ListField<T>(T list, string label, Func<T, int, string, object> customElementGUI = null, Func<T, object> customLabelRightFunc = null)
+        public static T ListField<T>(T list, string label, Func<T, int, string, object> customElementGUI = null, Func<T, object> customLabelRightFunc = null, bool isReadOnly = false)
             where T : IList
         {
             Func<object, Type, object> labelRightFunc = ListLabelRightFunc;
@@ -24,11 +24,22 @@ namespace RapidGUI
                 labelRightFunc = (obj, type) => customLabelRightFunc((T)obj);
             }
 
-            return (T)DoField(list, typeof(T), label, styleNone,
-                fieldFunc: (v, t) => ListField(v, t, customElementGUI),
-                labelRightFunc: labelRightFunc,
-                options: null
-                );
+            if (isReadOnly)
+            {
+                return (T)DoField(list, typeof(T), label, styleNone,
+                    fieldFunc: (v, t) => ReadOnlyListField(v, t, customElementGUI),
+                    labelRightFunc: labelRightFunc,
+                    options: null
+                    );
+            }
+            else
+            {
+                return (T)DoField(list, typeof(T), label, styleNone,
+                    fieldFunc: (v, t) => ListField(v, t, customElementGUI),
+                    labelRightFunc: labelRightFunc,
+                    options: null
+                    );
+            }
         }
 
         public static T ListLabelRightFunc<T>(T v) where T : IList => (T)ListLabelRightFunc(v, typeof(T));
@@ -134,6 +145,65 @@ namespace RapidGUI
 
             return list;
         }
+
+        static object ReadOnlyListField(object v, Type type) => ReadOnlyListField<object>(v, type, null);
+
+        static object ReadOnlyListField<T>(object v, Type type, Func<T, int, string, object> customElementGUI)
+        {
+            var list = v as IList;
+            var hasElem = (list != null) && list.Count > 0;
+            var elemType = TypeUtility.GetListInterface(type).GetGenericArguments().First();
+
+            var addIdx = -1;
+            var deleteIdx = -1;
+
+            using (new GUILayout.VerticalScope())
+            {
+                using (new GUILayout.VerticalScope("box"))
+                {
+                    if (v == null)
+                    {
+                        WarningLabelNoStyle("List is null.");
+                    }
+                    else if (!hasElem)
+                    {
+                        WarningLabelNoStyle("List is empty.");
+                    }
+                    else
+                    {
+                        for (var i = 0; i < list.Count; ++i)
+                        {
+                            var label = TypeUtility.IsMultiLine(elemType) ? $"Element {i}" : null;
+
+                            using (new IndentScope(20f))
+                            {
+                                list[i] = (customElementGUI != null)
+                                    ? customElementGUI((T)list, i, label)
+                                    : Field(list[i], elemType, label);
+                            }
+
+                            var result = PopupOnLastRect(ListPopupButtonNames, 1);
+
+                            switch (result)
+                            {
+                                case 0:
+                                    addIdx = i + 1;
+                                    break;
+                                case 1:
+                                    deleteIdx = i;
+                                    break;
+                            }
+                        }
+                    }
+
+                    if (addIdx >= 0) list = AddElement(list, elemType, list[addIdx - 1], addIdx);
+                    if (deleteIdx >= 0) list = DeleteElement(list, elemType, deleteIdx);
+                }
+            }
+
+            return list;
+        }
+
 
 
         static IList AddElementAtLast(IList list, Type type, Type elemType)
