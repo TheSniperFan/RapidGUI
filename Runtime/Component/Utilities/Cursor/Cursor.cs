@@ -14,10 +14,16 @@ namespace RapidGUI
 
     public static partial class RGUIUtility
     {
-        static readonly Dictionary<MouseCursor, CursorData.Data> cursorTable;
+        static Dictionary<MouseCursor, CursorData.Data> cursorTable;
 
 
         static RGUIUtility()
+        {
+            Init();
+        }
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void Init()
         {
             var data = Resources.Load<CursorData>("cursorData");
 

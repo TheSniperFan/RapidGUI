@@ -10,6 +10,12 @@ namespace RapidGUI
 
         static WindowInvoker()
         {
+            Init();
+        }
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void Init()
+        {
             RapidGUIBehaviour.Instance.onGUI += DoGUI;
         }
 

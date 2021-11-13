@@ -41,5 +41,13 @@ namespace RapidGUI
         {
             onGUI?.Invoke();
         }
+
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                instance = null;
+            }
+        }
     }
 }
