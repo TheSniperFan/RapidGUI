@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace RapidGUI
 {
@@ -20,7 +23,11 @@ namespace RapidGUI
         {
             //var windowPos = GUIUtility.GUIToScreenPoint(pos); // doesn't seem to work on the unity2020 Editor.
 
+#if ENABLE_INPUT_SYSTEM
+            var mousePos = InputSystem.GetDevice<Mouse>().position.ReadValue();
+#else
             var mousePos = Input.mousePosition;
+#endif
             var ret = new Vector2(mousePos.x, Screen.height - mousePos.y);
 
             if (screenInsideOffset.HasValue)
