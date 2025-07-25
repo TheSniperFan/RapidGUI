@@ -25,7 +25,7 @@ namespace RapidGUI
             {
                 if (--_delayCount <= 0)
                 {
-                    _obj = UnityEngine.Object.FindObjectOfType(_type);
+                    _obj = UnityEngine.Object.FindFirstObjectByType(_type);
                     _delayCount = UnityEngine.Random.Range(0, _delayCountMax);
                 }
             }
